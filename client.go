@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/jsteenb2/httpc"
 )
@@ -35,15 +36,24 @@ type Doer interface {
 
 type clientOpt struct {
 	host string
+	doer Doer
 }
 
 // ClientOptFn is an option to set the options of the client constructor.
 type ClientOptFn func(opt clientOpt) clientOpt
 
-// ClientHost sets the host for the client url.
-func ClientHost(host string) ClientOptFn {
+// WithHost sets the host for the client url.
+func WithHost(host string) ClientOptFn {
 	return func(opt clientOpt) clientOpt {
 		opt.host = host
+		return opt
+	}
+}
+
+// WithHTTPClient sets the http client on the quran api client.
+func WithHTTPClient(doer Doer) ClientOptFn {
+	return func(opt clientOpt) clientOpt {
+		opt.doer = doer
 		return opt
 	}
 }
@@ -56,8 +66,9 @@ type Client struct {
 // New Constructs a new Client. All default options will be  used if no options are
 // provided to overwrite them. The defaults are:
 //	host: https://quran.com/api
-func New(doer Doer, opts ...ClientOptFn) *Client {
+func New(opts ...ClientOptFn) *Client {
 	opt := clientOpt{
+		doer: &http.Client{Timeout: 15 * time.Second},
 		host: "https://quran.com/api",
 	}
 	for _, o := range opts {
@@ -66,7 +77,7 @@ func New(doer Doer, opts ...ClientOptFn) *Client {
 
 	baseURL := opt.host + "/api/v3"
 	return &Client{
-		c: httpc.New(doer, httpc.WithBaseURL(baseURL)),
+		c: httpc.New(opt.doer, httpc.WithBaseURL(baseURL)),
 	}
 }
 
