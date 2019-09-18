@@ -11,7 +11,7 @@ import (
 	"go.etcd.io/bbolt"
 )
 
-type BoltCacheMiddleware struct {
+type boltCacheMiddleware struct {
 	db   *bbolt.DB
 	next QuranAPI
 }
@@ -30,7 +30,7 @@ const (
 	bucketVerses       = "verses"
 )
 
-func NewBoltCache(client QuranAPI, db *bbolt.DB) (*BoltCacheMiddleware, error) {
+func BoltCache(client QuranAPI, db *bbolt.DB) (QuranAPI, error) {
 	buckets := map[string][]string{
 		bucketChapters:     {bucketChapter, bucketChapterInfo},
 		bucketJuzzah:       nil,
@@ -59,13 +59,13 @@ func NewBoltCache(client QuranAPI, db *bbolt.DB) (*BoltCacheMiddleware, error) {
 			return nil, err
 		}
 	}
-	return &BoltCacheMiddleware{
+	return &boltCacheMiddleware{
 		db:   db,
 		next: client,
 	}, nil
 }
 
-func (bc *BoltCacheMiddleware) Recitations(ctx context.Context, reqOpts ...ReqOptFn) ([]Recitation, error) {
+func (bc *boltCacheMiddleware) Recitations(ctx context.Context, reqOpts ...ReqOptFn) ([]Recitation, error) {
 	var opt reqOpt
 	for _, o := range reqOpts {
 		opt = o(opt)
@@ -101,7 +101,7 @@ func (bc *BoltCacheMiddleware) Recitations(ctx context.Context, reqOpts ...ReqOp
 	return clientOut, nil
 }
 
-func (bc *BoltCacheMiddleware) Translations(ctx context.Context, reqOpts ...ReqOptFn) ([]Translation, error) {
+func (bc *boltCacheMiddleware) Translations(ctx context.Context, reqOpts ...ReqOptFn) ([]Translation, error) {
 	var opt reqOpt
 	for _, o := range reqOpts {
 		opt = o(opt)
@@ -137,7 +137,7 @@ func (bc *BoltCacheMiddleware) Translations(ctx context.Context, reqOpts ...ReqO
 	return clientOut, nil
 }
 
-func (bc *BoltCacheMiddleware) Languages(ctx context.Context, reqOpts ...ReqOptFn) ([]Language, error) {
+func (bc *boltCacheMiddleware) Languages(ctx context.Context, reqOpts ...ReqOptFn) ([]Language, error) {
 	var opt reqOpt
 	for _, o := range reqOpts {
 		opt = o(opt)
@@ -173,7 +173,7 @@ func (bc *BoltCacheMiddleware) Languages(ctx context.Context, reqOpts ...ReqOptF
 	return clientOut, nil
 }
 
-func (bc *BoltCacheMiddleware) Tafsiraat(ctx context.Context, reqOpts ...ReqOptFn) ([]Tafsir, error) {
+func (bc *boltCacheMiddleware) Tafsiraat(ctx context.Context, reqOpts ...ReqOptFn) ([]Tafsir, error) {
 	var opt reqOpt
 	for _, o := range reqOpts {
 		opt = o(opt)
@@ -210,7 +210,7 @@ func (bc *BoltCacheMiddleware) Tafsiraat(ctx context.Context, reqOpts ...ReqOptF
 	return clientOut, nil
 }
 
-func (bc *BoltCacheMiddleware) Chapters(ctx context.Context, reqOpts ...ReqOptFn) ([]Chapter, error) {
+func (bc *boltCacheMiddleware) Chapters(ctx context.Context, reqOpts ...ReqOptFn) ([]Chapter, error) {
 	var opt reqOpt
 	for _, o := range reqOpts {
 		opt = o(opt)
@@ -246,7 +246,7 @@ func (bc *BoltCacheMiddleware) Chapters(ctx context.Context, reqOpts ...ReqOptFn
 	return clientOut, nil
 }
 
-func (bc *BoltCacheMiddleware) Chapter(ctx context.Context, id int, reqOpts ...ReqOptFn) (Chapter, error) {
+func (bc *boltCacheMiddleware) Chapter(ctx context.Context, id int, reqOpts ...ReqOptFn) (Chapter, error) {
 	var opt reqOpt
 	for _, o := range reqOpts {
 		opt = o(opt)
@@ -283,7 +283,7 @@ func (bc *BoltCacheMiddleware) Chapter(ctx context.Context, id int, reqOpts ...R
 	return clientOut, nil
 }
 
-func (bc *BoltCacheMiddleware) ChapterInfo(ctx context.Context, id int, reqOpts ...ReqOptFn) (ChapterInfo, error) {
+func (bc *boltCacheMiddleware) ChapterInfo(ctx context.Context, id int, reqOpts ...ReqOptFn) (ChapterInfo, error) {
 	var opt reqOpt
 	for _, o := range reqOpts {
 		opt = o(opt)
@@ -320,7 +320,7 @@ func (bc *BoltCacheMiddleware) ChapterInfo(ctx context.Context, id int, reqOpts 
 	return clientOut, nil
 }
 
-func (bc *BoltCacheMiddleware) Verses(ctx context.Context, chapterID int, reqOpts ...VersesReqOptFn) ([]Verse, error) {
+func (bc *boltCacheMiddleware) Verses(ctx context.Context, chapterID int, reqOpts ...VersesReqOptFn) ([]Verse, error) {
 	var opt versesReqOpt
 	for _, o := range reqOpts {
 		opt = o(opt)
@@ -359,7 +359,7 @@ func (bc *BoltCacheMiddleware) Verses(ctx context.Context, chapterID int, reqOpt
 	return clientOut, nil
 }
 
-func (bc *BoltCacheMiddleware) Verse(ctx context.Context, chapterID, verseID int) (Verse, error) {
+func (bc *boltCacheMiddleware) Verse(ctx context.Context, chapterID, verseID int) (Verse, error) {
 	bucket := []byte(bucketVerses)
 	nestedBucket := []byte(bucketVerse)
 	cacheID := []byte(join(itoa(chapterID), itoa(verseID)))
@@ -391,7 +391,7 @@ func (bc *BoltCacheMiddleware) Verse(ctx context.Context, chapterID, verseID int
 	return clientOut, nil
 }
 
-func (bc *BoltCacheMiddleware) Juzzah(ctx context.Context) ([]Juz, error) {
+func (bc *boltCacheMiddleware) Juzzah(ctx context.Context) ([]Juz, error) {
 	bucket := []byte(bucketJuzzah)
 	cacheID := []byte("juzzah")
 
@@ -422,7 +422,7 @@ func (bc *BoltCacheMiddleware) Juzzah(ctx context.Context) ([]Juz, error) {
 	return clientOut, nil
 }
 
-func (bc *BoltCacheMiddleware) VerseTafsir(ctx context.Context, chapterID, verseID int, reqOpts ...VerseTafsirReqOptFn) ([]VerseTafsir, error) {
+func (bc *boltCacheMiddleware) VerseTafsir(ctx context.Context, chapterID, verseID int, reqOpts ...VerseTafsirReqOptFn) ([]VerseTafsir, error) {
 	var opt verseTafsirReqOpts
 	for _, o := range reqOpts {
 		opt = o(opt)
@@ -459,7 +459,7 @@ func (bc *BoltCacheMiddleware) VerseTafsir(ctx context.Context, chapterID, verse
 	return clientOut, nil
 }
 
-func (bc *BoltCacheMiddleware) Search(ctx context.Context, query SearchRequest) (SearchResponse, error) {
+func (bc *boltCacheMiddleware) Search(ctx context.Context, query SearchRequest) (SearchResponse, error) {
 	return bc.next.Search(ctx, query)
 }
 
